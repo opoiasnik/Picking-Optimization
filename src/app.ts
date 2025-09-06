@@ -2,12 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { orderRoutes } from './routes/orderRoutes';
+import { requestLogger } from './middleware/requestLogger';
+import { RateLimiter } from './middleware/rateLimiter';
 
 const app = express();
+const rateLimiter = new RateLimiter(50, 15 * 60 * 1000); // 50 requests per 15 minutes
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+app.use(requestLogger);
+app.use(rateLimiter.middleware);
 
 app.use('/api/orders', orderRoutes);
 

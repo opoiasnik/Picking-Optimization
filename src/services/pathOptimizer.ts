@@ -72,6 +72,16 @@ export class PathOptimizerService {
       };
     }
 
+    if (n <= 8) {
+      return this.bruteForceTSP(positions, start);
+    } else if (n <= 15) {
+      return this.nearestNeighborTSP(positions, start);
+    } else {
+      return this.greedyTSP(positions, start);
+    }
+  }
+
+  private bruteForceTSP(positions: ProductPosition[], start: Position): { path: ProductPosition[]; distance: number } {
     let bestPath: ProductPosition[] = [];
     let bestDistance = Infinity;
 
@@ -86,6 +96,89 @@ export class PathOptimizerService {
     }
 
     return { path: bestPath, distance: bestDistance };
+  }
+
+  private nearestNeighborTSP(positions: ProductPosition[], start: Position): { path: ProductPosition[]; distance: number } {
+    const unvisited = new Set(positions);
+    const path: ProductPosition[] = [];
+    let currentPos: Position = start;
+    let totalDistance = 0;
+
+    while (unvisited.size > 0) {
+      let nearest: ProductPosition | null = null;
+      let nearestDistance = Infinity;
+
+      for (const position of unvisited) {
+        const distance = this.calculateDistance(currentPos, position);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = position;
+        }
+      }
+
+      if (nearest) {
+        path.push(nearest);
+        totalDistance += nearestDistance;
+        currentPos = nearest;
+        unvisited.delete(nearest);
+      }
+    }
+
+    return { path, distance: totalDistance };
+  }
+
+  private greedyTSP(positions: ProductPosition[], start: Position): { path: ProductPosition[]; distance: number } {
+    const edges: Array<{from: Position | ProductPosition, to: ProductPosition, distance: number}> = [];
+    
+    edges.push(...positions.map(pos => ({
+      from: start,
+      to: pos,
+      distance: this.calculateDistance(start, pos)
+    })));
+
+    for (let i = 0; i < positions.length; i++) {
+      for (let j = i + 1; j < positions.length; j++) {
+        const distance = this.calculateDistance(positions[i], positions[j]);
+        edges.push({from: positions[i], to: positions[j], distance});
+        edges.push({from: positions[j], to: positions[i], distance});
+      }
+    }
+
+    edges.sort((a, b) => a.distance - b.distance);
+
+    const path: ProductPosition[] = [];
+    const visited = new Set<ProductPosition>();
+    let current: Position | ProductPosition = start;
+    let totalDistance = 0;
+
+    while (path.length < positions.length) {
+      const nextEdge = edges.find(edge => 
+        edge.from === current && 
+        !visited.has(edge.to) && 
+        positions.includes(edge.to)
+      );
+
+      if (nextEdge) {
+        path.push(nextEdge.to);
+        visited.add(nextEdge.to);
+        totalDistance += nextEdge.distance;
+        current = nextEdge.to;
+      } else {
+        const remaining = positions.filter(pos => !visited.has(pos));
+        if (remaining.length > 0) {
+          const nearest = remaining.reduce((best, pos) => {
+            const dist = this.calculateDistance(current, pos);
+            return dist < this.calculateDistance(current, best) ? pos : best;
+          });
+          path.push(nearest);
+          visited.add(nearest);
+          totalDistance += this.calculateDistance(current, nearest);
+          current = nearest;
+        }
+      }
+    }
+
+    return { path, distance: totalDistance };
   }
 
   private generatePermutations<T>(arr: T[]): T[][] {
