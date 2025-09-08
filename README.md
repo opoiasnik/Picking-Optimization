@@ -35,7 +35,7 @@ npm run build
 npm start
 ```
 
-Server runs on `http://localhost:3001`
+Server runs on `http://localhost:3000`
 
 ## API Endpoints
 

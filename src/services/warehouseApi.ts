@@ -3,9 +3,21 @@ import { ProductPosition, WarehouseAPIResponse } from '../types/warehouse';
 import { CacheService } from './cacheService';
 
 export class WarehouseApiService {
-  private readonly baseUrl = 'https://dev.aux.boxpi.com/case-study/products';
-  private readonly apiKey = 'MVGBMS0VQI555bTery9qJ91BfUpi53N24SkKMf9Z';
+  private readonly baseUrl: string;
+  private readonly apiKey: string;
   private cache = new CacheService();
+
+  constructor() {
+    this.baseUrl = process.env.WAREHOUSE_API_URL!;
+    this.apiKey = process.env.WAREHOUSE_API_KEY!;
+    
+    if (!this.baseUrl) {
+      throw new Error('WAREHOUSE_API_URL environment variable is required');
+    }
+    if (!this.apiKey) {
+      throw new Error('WAREHOUSE_API_KEY environment variable is required');
+    }
+  }
 
   async getProductPositions(productId: string): Promise<ProductPosition[]> {
     const cacheKey = `positions:${productId}`;

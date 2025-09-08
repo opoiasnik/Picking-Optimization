@@ -1,16 +1,13 @@
 import { WarehouseApiService } from './warehouseApi';
-import { MockWarehouseApiService } from './mockWarehouseApi';
 import { PathOptimizerService } from './pathOptimizer';
 import { OrderRequest, OrderResponse } from '../types/warehouse';
 
 export class OrderService {
-  private warehouseApi: WarehouseApiService | MockWarehouseApiService;
+  private warehouseApi: WarehouseApiService;
   private pathOptimizer: PathOptimizerService;
 
   constructor() {
-    this.warehouseApi = process.env.NODE_ENV === 'production' 
-      ? new WarehouseApiService() 
-      : new MockWarehouseApiService();
+    this.warehouseApi = new WarehouseApiService();
     this.pathOptimizer = new PathOptimizerService();
   }
 
